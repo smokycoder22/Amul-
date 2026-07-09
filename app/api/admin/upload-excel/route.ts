@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseExcelFile } from '@/lib/excel-parser'
 import { query } from '@/lib/db'
-
+import { requireAdmin } from '@/lib/require-admin'
 export async function POST(request: NextRequest) {
   try {
+    const admin = await requireAdmin()
+
+if (!admin) {
+  return NextResponse.json(
+    { error: 'Unauthorized' },
+    { status: 401 }
+  )
+}
     const formData = await request.formData()
     const file = formData.get('file') as File
     
@@ -39,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Generate preview data (before/after for each product)
     const preview = products.map(p => {
       const existing = existingProducts.get(p.sapCode)
-      const oldPrice = existing ? parseFloat(existing.retailer_price) : null
+      const oldPrice = existing ? Number(existing.retailer_price) : null
       
       return {
         sapCode: p.sapCode,

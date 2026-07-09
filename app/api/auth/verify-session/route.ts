@@ -16,11 +16,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Allow the demo fallback session token for local development.
-  if (process.env.NODE_ENV !== 'production' && token === 'mock-admin-session-token') {
-    return NextResponse.json({ valid: true, username: 'admin' })
-  }
-
   try {
     const result = await pool.query(
       'SELECT id, username, expires_at FROM admin_login WHERE session_token = $1',

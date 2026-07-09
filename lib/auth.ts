@@ -97,38 +97,82 @@ export async function createAdminSession(
   username: string,
   password: string
 ): Promise<string | null> {
-  const envAdminId = process.env.ADMIN_ID || 'amul@pune'
-  const envAdminPassword = process.env.ADMIN_PASSWORD || 'gcmmf123'
+  const envAdminId = process.env.ADMIN_ID
+  const envAdminPassword = process.env.ADMIN_PASSWORD
+  // Log presence of env vars (do NOT log values).
+  try {
+    console.log('[v0] createAdminSession env presence', {
+      hasAdminId: Boolean(envAdminId),
+      hasAdminPassword: Boolean(envAdminPassword),
+    })
+  } catch (e) {
+    // ignore logging errors
+  }
 
-  // Accept the demo admin credentials even when the DB isn't configured.
-  if (username === envAdminId && password === envAdminPassword) {
-    try {
-      const sessionToken = generateSessionToken()
-      const sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-      
-      await query(
-        `INSERT INTO admin_login (username, password_hash, session_token, expires_at)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (username) 
-         DO UPDATE SET session_token = $3, expires_at = $4`,
-        [username, 'env_backed', sessionToken, sessionExpiresAt]
-      )
-      console.log('[v0] Admin session created in DB for username:', username)
-      return sessionToken
-    } catch (dbErr) {
-      console.warn('[v0] Database session write failed, falling back to demo session:', dbErr)
-      return 'mock-admin-session-token'
+  // Require credentials to be provided via environment variables.
+  if (!envAdminId || !envAdminPassword) {
+    console.warn('[v0] ADMIN_ID or ADMIN_PASSWORD not configured; rejecting login')
+    return null
+  }
+
+  // Only accept username/password that match env values
+  if (username !== envAdminId || password !== envAdminPassword) {
+    return null
+  }
+
+  // Create a session in the database. If DB write fails, do NOT return a mock token.
+  let sessionToken: string | null = null
+  let sessionExpiresAt: Date | null = null
+
+  try {
+    sessionToken = generateSessionToken()
+    sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    await query(
+      `INSERT INTO admin_login (username, password_hash, session_token, expires_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (username) 
+       DO UPDATE SET session_token = $3, expires_at = $4`,
+      [username, 'env_backed', sessionToken, sessionExpiresAt]
+    )
+
+    return sessionToken
+  } catch (dbErr) {
+    // If the admin_login table doesn't exist, attempt to create it (minimal safe migration) and retry once.
+    const isMissingTable = (dbErr as any)?.code === '42P01'
+    if (isMissingTable) {
+      try {
+        await query(`
+          CREATE TABLE IF NOT EXISTS admin_login (
+            id serial PRIMARY KEY,
+            username text UNIQUE NOT NULL,
+            password_hash text NOT NULL,
+            session_token text,
+            expires_at timestamptz,
+            created_at timestamptz DEFAULT now(),
+            updated_at timestamptz DEFAULT now()
+          )
+        `)
+
+        // Retry inserting session
+        await query(
+          `INSERT INTO admin_login (username, password_hash, session_token, expires_at)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (username) 
+           DO UPDATE SET session_token = $3, expires_at = $4`,
+          [username, 'env_backed', sessionToken, sessionExpiresAt]
+        )
+
+        return sessionToken
+      } catch (retryErr) {
+        console.error('[v0] Database session write retry failed:', retryErr)
+        return null
+      }
     }
-  }
 
-  // Developer fallback for testing locally without database/env setup.
-  if (process.env.NODE_ENV !== 'production' && username === 'amul@pune' && password === 'gcmmf123') {
-    console.warn('[v0] Using dev mock login fallback for demo mode.')
-    return 'mock-admin-session-token'
+    console.error('[v0] Database session write failed:', dbErr)
+    return null
   }
-
-  console.log('[v0] Admin login credentials mismatch for username:', username)
-  return null
 }
 
 // Get admin session by token
@@ -144,7 +188,8 @@ export async function getAdminSession(sessionToken: string) {
     return result.rows[0] || null
   } catch (error) {
     console.error('[v0] Error getting admin session:', error)
-    throw error
+    // Fail closed: return null so callers treat as unauthorized rather than crashing.
+    return null
   }
 }
 

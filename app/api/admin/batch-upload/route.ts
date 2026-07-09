@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { uploadProductImage } from '@/lib/storage'
 import { query } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,14 @@ interface FileReport {
 
 export async function POST(request: NextRequest) {
   try {
+    const admin = await requireAdmin()
+
+if (!admin) {
+  return NextResponse.json(
+    { error: 'Unauthorized' },
+    { status: 401 }
+  )
+}
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const replaceMode = formData.get('replaceMode') === 'true'

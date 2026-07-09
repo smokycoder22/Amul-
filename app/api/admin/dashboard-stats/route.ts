@@ -1,11 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { getAdminSession } from '@/lib/auth'
+import { requireAdmin } from '@/lib/require-admin'
 import { resolveFamilyImages } from '@/lib/product-helper'
-
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    const admin = await requireAdmin()
+
+if (!admin) {
+  return NextResponse.json(
+    { error: 'Unauthorized' },
+    { status: 401 }
+  )
+}
+    const cookieStore = await cookies()
+    const sessionToken = cookieStore.get('admin_session')?.value
+
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const adminSession = await getAdminSession(sessionToken)
+
+    if (!adminSession) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     let totalProducts = 0
     let categoriesCount = 0
     let pendingProducts: any[] = []

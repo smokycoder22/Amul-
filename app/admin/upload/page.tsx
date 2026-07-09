@@ -68,14 +68,14 @@ export default function AdminUploadPage() {
         const data = await response.json()
         
         if (!response.ok) {
-          setErrorDetails(data.details || [])
+          setErrorDetails(Array.isArray(data.details) ? data.details : [])
           throw new Error(data.error || 'Failed to process file')
         }
         
         setFileName(file.name)
         setSelectedFile(file)
-        setPreview(data.preview)
-        setParseErrors(data.errors || [])
+        setPreview(Array.isArray(data.preview) ? data.preview : [])
+        setParseErrors(Array.isArray(data.errors) ? data.errors : [])
         setStep('preview')
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -104,9 +104,11 @@ export default function AdminUploadPage() {
         body: formData,
       })
       
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
       
       if (!response.ok) {
+        const details = Array.isArray(data.details) ? data.details : []
+        setErrorDetails(details)
         throw new Error(data.error || 'Failed to publish prices')
       }
       

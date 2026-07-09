@@ -3,9 +3,17 @@ import { uploadProductImage } from '@/lib/storage'
 import { query } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-
+import { requireAdmin } from '@/lib/require-admin'
 export async function POST(request: NextRequest) {
   try {
+    const admin = await requireAdmin()
+
+if (!admin) {
+  return NextResponse.json(
+    { error: 'Unauthorized' },
+    { status: 401 }
+  )
+}
     const formData = await request.formData()
     const file = formData.get('file') as File
     const sapCode = formData.get('sapCode') as string

@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseExcelFile } from '@/lib/excel-parser'
-import { getConnection, pool } from '@/lib/db'
+import { getConnection } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-
+import { requireAdmin } from '@/lib/require-admin'
 export async function POST(request: NextRequest) {
   let client;
   try {
+    const admin = await requireAdmin()
+
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     
