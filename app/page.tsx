@@ -135,17 +135,17 @@ export default function LandingPage() {
           {/* Right: Desktop Actions */}
           <div className="hidden md:flex items-center">
             <a
-              href="tel:+912026830156"
+              href="tel:+919324513050"
               className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#A10B13] rounded-full font-bold text-sm shadow-md hover:bg-red-50 hover:shadow-lg transition-all hover:scale-[1.02]"
             >
-              Call: +91 20 2683 0156
+              Call: +91-9324513050
             </a>
           </div>
 
           {/* Mobile Actions: Contact Button next to Menu */}
           <div className="flex items-center gap-2 md:hidden">
             <a
-              href="tel:+917666463489"
+              href="tel:+919324513050"
               className="px-3.5 py-1.5 bg-white text-[#A10B13] rounded-full text-xs font-black uppercase tracking-wider shadow-sm hover:bg-red-50 transition"
             >
               Contact
