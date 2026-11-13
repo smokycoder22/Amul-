@@ -1,6 +1,7 @@
 'use client'
 
 import { Product } from './product-table'
+import { formatProductImageUrl } from '@/lib/utils'
 
 interface ProductCardProps {
   product: Product
@@ -33,9 +34,9 @@ export function ProductCard({ product, role }: ProductCardProps) {
       
       {/* Product Image Frame */}
       <div className="h-40 sm:h-48 w-full bg-gray-50 flex items-center justify-center p-5 overflow-hidden relative border-b border-gray-100/50">
-        {product.image_url ? (
+        {formatProductImageUrl(product.image_url, product.updated_at) ? (
           <img
-            src={product.image_url.startsWith('http') ? `${product.image_url}?t=${new Date(product.updated_at).getTime()}` : product.image_url}
+            src={formatProductImageUrl(product.image_url, product.updated_at)!}
             alt={product.product_name}
             className="w-full h-full object-contain object-center transform group-hover:scale-105 transition duration-300"
             loading="lazy"

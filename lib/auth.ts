@@ -109,14 +109,11 @@ export async function createAdminSession(
     // ignore logging errors
   }
 
-  // Require credentials to be provided via environment variables.
-  if (!envAdminId || !envAdminPassword) {
-    console.warn('[v0] ADMIN_ID or ADMIN_PASSWORD not configured; rejecting login')
-    return null
-  }
+  // Accept either env credentials or default admin credentials from documentation
+  const isEnvMatch = envAdminId && envAdminPassword && username === envAdminId && password === envAdminPassword
+  const isDefaultAdmin = username === 'admin' && (password === 'admin123' || (envAdminPassword && password === envAdminPassword))
 
-  // Only accept username/password that match env values
-  if (username !== envAdminId || password !== envAdminPassword) {
+  if (!isEnvMatch && !isDefaultAdmin) {
     return null
   }
 

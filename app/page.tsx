@@ -30,7 +30,11 @@ export default function LandingPage() {
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data)) {
-            const sorted = [...data].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            const sorted = [...data].sort((a: any, b: any) => {
+              const timeB = new Date(b.created_at || b.updated_at || 0).getTime()
+              const timeA = new Date(a.created_at || a.updated_at || 0).getTime()
+              return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA)
+            })
             setProducts(sorted)
             return
           }

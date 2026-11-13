@@ -13,10 +13,11 @@ export async function POST(request: NextRequest) {
         console.error('[v0] Failed to invalidate admin session on logout:', e)
       }
     }
-    cookieStore.delete('admin_session')
-    cookieStore.delete('distributor_session')
+    const response = NextResponse.json({ success: true, message: 'Logged out successfully' })
+    response.cookies.delete('admin_session')
+    response.cookies.delete('distributor_session')
     
-    return NextResponse.json({ success: true, message: 'Logged out successfully' })
+    return response
   } catch (error) {
     console.error('[v0] Error logging out:', error)
     return NextResponse.json(

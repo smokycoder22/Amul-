@@ -22,21 +22,22 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Set session cookie
-    const cookieStore = await cookies()
-    cookieStore.set('admin_session', sessionToken, {
+    // Set session cookie directly on response
+    const response = NextResponse.json({
+      success: true,
+      message: 'Login successful',
+      sessionToken,
+    })
+
+    response.cookies.set('admin_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     })
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Login successful',
-      sessionToken,
-    })
+
+    return response
   } catch (error) {
     console.error('[v0] Error logging in:', error)
     return NextResponse.json(

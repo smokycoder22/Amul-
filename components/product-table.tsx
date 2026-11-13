@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatProductImageUrl } from '@/lib/utils'
 
 export interface Product {
   sap_code: string
@@ -34,10 +35,10 @@ export function ProductTable({ products, role }: ProductTableProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:hidden">
         {products.map((product) => (
           <div key={product.sap_code} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white">
-            {product.image_url ? (
+            {formatProductImageUrl(product.image_url, product.updated_at) ? (
               <div className="h-48 bg-gray-100 overflow-hidden flex items-center justify-center">
                 <img 
-                  src={product.image_url} 
+                  src={formatProductImageUrl(product.image_url, product.updated_at)!} 
                   alt={product.product_name}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -109,9 +110,9 @@ export function ProductTable({ products, role }: ProductTableProps) {
             {products.map((product) => (
               <tr key={product.sap_code} className="border-b hover:bg-gray-50">
                 <td className="px-4 py-3">
-                  {product.image_url ? (
+                  {formatProductImageUrl(product.image_url, product.updated_at) ? (
                     <img 
-                      src={product.image_url} 
+                      src={formatProductImageUrl(product.image_url, product.updated_at)!} 
                       alt={product.product_name}
                       className="w-12 h-12 object-cover rounded"
                       loading="lazy"

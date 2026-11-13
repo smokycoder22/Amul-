@@ -30,7 +30,7 @@ export default function AdminUploadPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch('/api/auth/verify-session')
+        const res = await fetch('/api/auth/verify-session', { cache: 'no-store' })
         if (!res.ok) {
           router.replace('/admin/login')
         }
